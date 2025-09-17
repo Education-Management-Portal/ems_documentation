@@ -1,0 +1,1837 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Educational Management API",
+      "version": "1.0.0",
+      "description": "A comprehensive API for managing educational records, schools, students, and certificates in Imo State.\nThis API provides endpoints for admin authentication, school management, student management,\ncertificate uploads, result searches, payments, and certificate generation.\n",
+      "contact": {
+        "name": "Educational Management Team",
+        "email": "info@idcl.com",
+        "url": "https://imodigitalcity.com"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "https://opensource.org/licenses/MIT"
+      }
+    },
+    "servers": [
+      {
+        "url": "https://api.edu-management.gov.ng/v1",
+        "description": "Production server"
+      },
+      {
+        "url": "https://staging-api.edu-management.gov.ng/v1",
+        "description": "Staging server"
+      },
+      {
+        "url": "http://localhost:3000/api",
+        "description": "Development server"
+      }
+    ],
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ],
+    "paths": {
+      "/auth/admin/login": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Admin login",
+          "description": "Authenticate admin user and return JWT token",
+          "security": [],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminLoginRequest"
+                },
+                "example": {
+                  "email": "admin@edu-management.gov.ng",
+                  "password": "securePassword123"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful authentication",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthResponse"
+                  },
+                  "example": {
+                    "success": true,
+                    "message": "Login successful",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "user": {
+                      "id": "64f7a8b2e4b0c1234567890a",
+                      "email": "admin@edu-management.gov.ng",
+                      "role": "admin"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "$ref": "#/components/responses/UnauthorizedError"
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        }
+      },
+      "/auth/refresh": {
+        "post": {
+          "tags": ["Authentication"],
+          "summary": "Refresh JWT token",
+          "description": "Refresh expired JWT token",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "refreshToken": {
+                      "type": "string",
+                      "description": "Valid refresh token"
+                    }
+                  },
+                  "required": ["refreshToken"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Token refreshed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/AuthResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/schools": {
+        "get": {
+          "tags": ["Schools"],
+          "summary": "Get all schools",
+          "description": "Retrieve a list of all schools with optional filtering",
+          "parameters": [
+            {
+              "name": "lga",
+              "in": "query",
+              "description": "Filter by Local Government Area",
+              "schema": {
+                "type": "string"
+              },
+              "example": "Owerri North"
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Page number for pagination",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Number of items per page",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+              }
+            },
+            {
+              "name": "search",
+              "in": "query",
+              "description": "Search schools by name",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of schools retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/School"
+                        }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        },
+        "post": {
+          "tags": ["Schools"],
+          "summary": "Create a new school",
+          "description": "Register a new school in the system",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSchoolRequest"
+                },
+                "example": {
+                  "schoolId": "SCH001",
+                  "name": "Government Secondary School Owerri",
+                  "lga": "Owerri North"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "School created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/School"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            },
+            "409": {
+              "description": "School already exists",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/ErrorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/schools/{schoolId}": {
+        "get": {
+          "tags": ["Schools"],
+          "summary": "Get school by ID",
+          "description": "Retrieve detailed information about a specific school",
+          "parameters": [
+            {
+              "name": "schoolId",
+              "in": "path",
+              "required": true,
+              "description": "Unique school identifier",
+              "schema": {
+                "type": "string"
+              },
+              "example": "SCH001"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "School details retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/School"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Schools"],
+          "summary": "Update school",
+          "description": "Update school information",
+          "parameters": [
+            {
+              "name": "schoolId",
+              "in": "path",
+              "required": true,
+              "description": "Unique school identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateSchoolRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "School updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/School"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Schools"],
+          "summary": "Delete school",
+          "description": "Remove a school from the system",
+          "parameters": [
+            {
+              "name": "schoolId",
+              "in": "path",
+              "required": true,
+              "description": "Unique school identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "School deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        }
+      },
+      "/students": {
+        "get": {
+          "tags": ["Students"],
+          "summary": "Get all students",
+          "description": "Retrieve a list of all students with optional filtering",
+          "parameters": [
+            {
+              "name": "schoolId",
+              "in": "query",
+              "description": "Filter by school ID",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Page number for pagination",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Number of items per page",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+              }
+            },
+            {
+              "name": "search",
+              "in": "query",
+              "description": "Search students by name",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of students retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/Student"
+                        }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": ["Students"],
+          "summary": "Create a new student",
+          "description": "Register a new student in the system",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateStudentRequest"
+                },
+                "example": {
+                  "userId": "STU001",
+                  "name": "John Doe",
+                  "schoolId": "64f7a8b2e4b0c1234567890a"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Student created successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        }
+      },
+      "/students/{userId}": {
+        "get": {
+          "tags": ["Students"],
+          "summary": "Get student by user ID",
+          "description": "Retrieve detailed information about a specific student",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "description": "Unique student user identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Student details retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Students"],
+          "summary": "Update student",
+          "description": "Update student information",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "description": "Unique student user identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStudentRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Student updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Student"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Students"],
+          "summary": "Delete student",
+          "description": "Remove a student from the system",
+          "parameters": [
+            {
+              "name": "userId",
+              "in": "path",
+              "required": true,
+              "description": "Unique student user identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Student deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        }
+      },
+      "/certificates/bec": {
+        "get": {
+          "tags": ["Certificates"],
+          "summary": "Get all BEC certificates",
+          "description": "Retrieve a list of all BEC certificates with optional filtering",
+          "parameters": [
+            {
+              "name": "examYear",
+              "in": "query",
+              "description": "Filter by examination year",
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "schoolId",
+              "in": "query",
+              "description": "Filter by school ID",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "page",
+              "in": "query",
+              "description": "Page number for pagination",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              }
+            },
+            {
+              "name": "limit",
+              "in": "query",
+              "description": "Number of items per page",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "List of BEC certificates retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/BECCertificate"
+                        }
+                      },
+                      "pagination": {
+                        "$ref": "#/components/schemas/Pagination"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "post": {
+          "tags": ["Certificates"],
+          "summary": "Upload BEC certificate results",
+          "description": "Upload Excel file containing BEC certificate results",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "Excel file (.xlsx or .xls) containing certificate data"
+                    }
+                  },
+                  "required": ["file"]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "File uploaded and processed successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "totalRecords": {
+                        "type": "integer"
+                      },
+                      "validRecords": {
+                        "type": "integer"
+                      },
+                      "duplicatesSkipped": {
+                        "type": "integer"
+                      },
+                      "processedCount": {
+                        "type": "integer"
+                      },
+                      "errorCount": {
+                        "type": "integer"
+                      },
+                      "validationErrors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "processingErrors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "success": true,
+                    "message": "Successfully imported all 150 records!",
+                    "totalRecords": 150,
+                    "validRecords": 150,
+                    "duplicatesSkipped": 0,
+                    "processedCount": 150,
+                    "errorCount": 0
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        }
+      },
+      "/certificates/bec/{examNumber}": {
+        "get": {
+          "tags": ["Certificates"],
+          "summary": "Get BEC certificate by exam number",
+          "description": "Retrieve BEC certificate details by examination number",
+          "parameters": [
+            {
+              "name": "examNumber",
+              "in": "path",
+              "required": true,
+              "description": "Student examination number",
+              "schema": {
+                "type": "string"
+              },
+              "example": "BEC2024001"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "BEC certificate retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/BECCertificate"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "put": {
+          "tags": ["Certificates"],
+          "summary": "Update BEC certificate",
+          "description": "Update BEC certificate information",
+          "parameters": [
+            {
+              "name": "examNumber",
+              "in": "path",
+              "required": true,
+              "description": "Student examination number",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateBECCertificateRequest"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "BEC certificate updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/BECCertificate"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        },
+        "delete": {
+          "tags": ["Certificates"],
+          "summary": "Delete BEC certificate",
+          "description": "Remove a BEC certificate from the system",
+          "parameters": [
+            {
+              "name": "examNumber",
+              "in": "path",
+              "required": true,
+              "description": "Student examination number",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "BEC certificate deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        }
+      },
+      "/search/results": {
+        "get": {
+          "tags": ["Search"],
+          "summary": "Search student results",
+          "description": "Search for student results across all certificate types",
+          "parameters": [
+            {
+              "name": "examNumber",
+              "in": "query",
+              "description": "Student examination number",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "name",
+              "in": "query",
+              "description": "Student name (partial match)",
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "certificateType",
+              "in": "query",
+              "description": "Type of certificate",
+              "schema": {
+                "type": "string",
+                "enum": ["bec", "waec", "neco", "jamb"]
+              }
+            },
+            {
+              "name": "examYear",
+              "in": "query",
+              "description": "Examination year",
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "schoolId",
+              "in": "query",
+              "description": "School identifier",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Search results retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "data": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/components/schemas/SearchResult"
+                        }
+                      },
+                      "count": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        }
+      },
+      "/payments": {
+        "post": {
+          "tags": ["Payments"],
+          "summary": "Initialize payment",
+          "description": "Initialize payment for certificate access or services",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitializePaymentRequest"
+                },
+                "example": {
+                  "examNumber": "BEC2024001",
+                  "serviceType": "certificate_access",
+                  "amount": 2000,
+                  "currency": "NGN",
+                  "customerEmail": "student@example.com",
+                  "customerPhone": "+2348012345678"
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Payment initialized successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentResponse"
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            }
+          }
+        }
+      },
+      "/payments/{reference}/verify": {
+        "get": {
+          "tags": ["Payments"],
+          "summary": "Verify payment",
+          "description": "Verify payment status using payment reference",
+          "parameters": [
+            {
+              "name": "reference",
+              "in": "path",
+              "required": true,
+              "description": "Payment reference number",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Payment verification successful",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/PaymentVerificationResponse"
+                  }
+                }
+              }
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        }
+      },
+      "/certificates/generate": {
+        "post": {
+          "tags": ["Certificate Generation"],
+          "summary": "Generate certificate PDF",
+          "description": "Generate a downloadable PDF certificate",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GenerateCertificateRequest"
+                },
+                "example": {
+                  "examNumber": "BEC2024001",
+                  "certificateType": "bec",
+                  "format": "pdf"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Certificate generated successfully",
+              "content": {
+                "application/pdf": {
+                  "schema": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "success": {
+                        "type": "boolean"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "downloadUrl": {
+                        "type": "string",
+                        "format": "uri"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "$ref": "#/components/responses/BadRequestError"
+            },
+            "404": {
+              "$ref": "#/components/responses/NotFoundError"
+            }
+          }
+        }
+      },
+      "/reports/statistics": {
+        "get": {
+          "tags": ["Reports"],
+          "summary": "Get system statistics",
+          "description": "Retrieve comprehensive system statistics",
+          "parameters": [
+            {
+              "name": "year",
+              "in": "query",
+              "description": "Filter statistics by year",
+              "schema": {
+                "type": "integer"
+              }
+            },
+            {
+              "name": "schoolId",
+              "in": "query",
+              "description": "Filter statistics by school",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Statistics retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SystemStatistics"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer",
+          "bearerFormat": "JWT"
+        }
+      },
+      "schemas": {
+        "AdminLoginRequest": {
+          "type": "object",
+          "required": ["email", "password"],
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email",
+              "description": "Admin email address"
+            },
+            "password": {
+              "type": "string",
+              "minLength": 6,
+              "description": "Admin password"
+            }
+          }
+        },
+        "AuthResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            },
+            "token": {
+              "type": "string",
+              "description": "JWT access token"
+            },
+            "refreshToken": {
+              "type": "string",
+              "description": "JWT refresh token"
+            },
+            "user": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "role": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "School": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "type": "string",
+              "description": "MongoDB ObjectId"
+            },
+            "schoolId": {
+              "type": "string",
+              "description": "Unique school identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "School name"
+            },
+            "lga": {
+              "type": "string",
+              "description": "Local Government Area"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "example": {
+            "_id": "64f7a8b2e4b0c1234567890a",
+            "schoolId": "SCH001",
+            "name": "Government Secondary School Owerri",
+            "lga": "Owerri North",
+            "createdAt": "2024-09-16T10:30:00Z",
+            "updatedAt": "2024-09-16T10:30:00Z"
+          }
+        },
+        "CreateSchoolRequest": {
+          "type": "object",
+          "required": ["schoolId", "name", "lga"],
+          "properties": {
+            "schoolId": {
+              "type": "string",
+              "description": "Unique school identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "School name"
+            },
+            "lga": {
+              "type": "string",
+              "description": "Local Government Area"
+            }
+          }
+        },
+        "UpdateSchoolRequest": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "School name"
+            },
+            "lga": {
+              "type": "string",
+              "description": "Local Government Area"
+            }
+          }
+        },
+        "Student": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "type": "string",
+              "description": "MongoDB ObjectId"
+            },
+            "userId": {
+              "type": "string",
+              "description": "Unique student identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "Student full name"
+            },
+            "school": {
+              "$ref": "#/components/schemas/School"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "example": {
+            "_id": "64f7a8b2e4b0c1234567890b",
+            "userId": "STU001",
+            "name": "John Doe",
+            "school": {
+              "_id": "64f7a8b2e4b0c1234567890a",
+              "schoolId": "SCH001",
+              "name": "Government Secondary School Owerri",
+              "lga": "Owerri North"
+            }
+          }
+        },
+        "CreateStudentRequest": {
+          "type": "object",
+          "required": ["userId", "name", "school"],
+          "properties": {
+            "userId": {
+              "type": "string",
+              "description": "Unique student identifier"
+            },
+            "name": {
+              "type": "string",
+              "description": "Student full name"
+            },
+            "school": {
+              "type": "string",
+              "description": "School ObjectId reference"
+            }
+          }
+        },
+        "UpdateStudentRequest": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Student full name"
+            },
+            "school": {
+              "type": "string",
+              "description": "School ObjectId reference"
+            }
+          }
+        },
+        "Score": {
+          "type": "object",
+          "properties": {
+            "CA": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Continuous Assessment score"
+            },
+            "Exam": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Examination score"
+            }
+          },
+          "required": ["CA", "Exam"]
+        },
+        "Subjects": {
+          "type": "object",
+          "properties": {
+            "english": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "mathematics": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "basicScience": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "christianReligiousStudies": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "nationalValues": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "culturalAndCreativeArts": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "businessStudies": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "history": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "igbo": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "hausa": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "yoruba": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "preVocationalStudies": {
+              "$ref": "#/components/schemas/Score"
+            },
+            "frenchLanguage": {
+              "$ref": "#/components/schemas/Score"
+            }
+          }
+        },
+        "BECCertificate": {
+          "type": "object",
+          "properties": {
+            "_id": {
+              "type": "string",
+              "description": "MongoDB ObjectId"
+            },
+            "becId": {
+              "type": "string",
+              "description": "Unique BEC certificate identifier"
+            },
+            "studentId": {
+              "type": "string",
+              "description": "Student ObjectId reference"
+            },
+            "examNumber": {
+              "type": "string",
+              "description": "Student examination number"
+            },
+            "name": {
+              "type": "string",
+              "description": "Student full name"
+            },
+            "sex": {
+              "type": "string",
+              "enum": ["M", "F"],
+              "nullable": true,
+              "description": "Student gender"
+            },
+            "examYear": {
+              "type": "integer",
+              "description": "Examination year"
+            },
+            "age": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120,
+              "nullable": true,
+              "description": "Student age"
+            },
+            "serialNumber": {
+              "type": "string",
+              "nullable": true,
+              "description": "Certificate serial number"
+            },
+            "school": {
+              "$ref": "#/components/schemas/School"
+            },
+            "subjects": {
+              "$ref": "#/components/schemas/Subjects"
+            },
+            "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "UpdateBECCertificateRequest": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "sex": {
+              "type": "string",
+              "enum": ["M", "F"]
+            },
+            "age": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 120
+            },
+            "serialNumber": {
+              "type": "string"
+            },
+            "subjects": {
+              "$ref": "#/components/schemas/Subjects"
+            }
+          }
+        },
+        "SearchResult": {
+          "type": "object",
+          "properties": {
+            "certificateType": {
+              "type": "string"
+            },
+            "examNumber": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "examYear": {
+              "type": "integer"
+            },
+            "school": {
+              "type": "string"
+            },
+            "subjects": {
+              "type": "object"
+            }
+          }
+        },
+        "InitializePaymentRequest": {
+          "type": "object",
+          "required": ["examNumber", "serviceType", "amount", "currency", "customerEmail"],
+          "properties": {
+            "examNumber": {
+              "type": "string",
+              "description": "Student examination number"
+            },
+            "serviceType": {
+              "type": "string",
+              "enum": ["certificate_access", "result_verification", "transcript"],
+              "description": "Type of service being paid for"
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Payment amount"
+            },
+            "currency": {
+              "type": "string",
+              "default": "NGN",
+              "description": "Payment currency"
+            },
+            "customerEmail": {
+              "type": "string",
+              "format": "email",
+              "description": "Customer email address"
+            },
+            "customerPhone": {
+              "type": "string",
+              "description": "Customer phone number"
+            }
+          }
+        },
+        "PaymentResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            },
+            "reference": {
+              "type": "string",
+              "description": "Payment reference number"
+            },
+            "authorizationUrl": {
+              "type": "string",
+              "format": "uri",
+              "description": "Payment authorization URL"
+            },
+            "accessCode": {
+              "type": "string",
+              "description": "Payment access code"
+            }
+          }
+        },
+        "PaymentVerificationResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            },
+            "data": {
+              "type": "object",
+              "properties": {
+                "status": {
+                  "type": "string",
+                  "enum": ["success", "failed", "pending"]
+                },
+                "reference": {
+                  "type": "string"
+                },
+                "amount": {
+                  "type": "number"
+                },
+                "currency": {
+                  "type": "string"
+                },
+                "paidAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          }
+        },
+        "GenerateCertificateRequest": {
+          "type": "object",
+          "required": ["examNumber", "certificateType"],
+          "properties": {
+            "examNumber": {
+              "type": "string",
+              "description": "Student examination number"
+            },
+            "certificateType": {
+              "type": "string",
+              "enum": ["bec", "waec", "neco", "jamb"],
+              "description": "Type of certificate to generate"
+            },
+            "format": {
+              "type": "string",
+              "enum": ["pdf", "png", "jpg"],
+              "default": "pdf",
+              "description": "Output format"
+            }
+          }
+        },
+        "SystemStatistics": {
+          "type": "object",
+          "properties": {
+            "totalSchools": {
+              "type": "integer"
+            },
+            "totalStudents": {
+              "type": "integer"
+            },
+            "totalCertificates": {
+              "type": "integer"
+            },
+            "certificatesByType": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "certificatesByYear": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "schoolsByLGA": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "Pagination": {
+          "type": "object",
+          "properties": {
+            "currentPage": {
+              "type": "integer"
+            },
+            "totalPages": {
+              "type": "integer"
+            },
+            "totalItems": {
+              "type": "integer"
+            },
+            "itemsPerPage": {
+              "type": "integer"
+            },
+            "hasNext": {
+              "type": "boolean"
+            },
+            "hasPrev": {
+              "type": "boolean"
+            }
+          }
+        },
+        "ErrorResponse": {
+          "type": "object",
+          "properties": {
+            "success": {
+              "type": "boolean",
+              "default": false
+            },
+            "error": {
+              "type": "string"
+            },
+            "message": {
+              "type": "string"
+            },
+            "details": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "responses": {
+        "BadRequestError": {
+          "description": "Bad request - Invalid input data",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "example": {
+                "success": false,
+                "error": "Bad Request",
+                "message": "Invalid input data provided",
+                "details": "Validation errors in request body"
+              }
+            }
+          }
+        },
+        "UnauthorizedError": {
+          "description": "Unauthorized - Invalid or missing authentication",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "example": {
+                "success": false,
+                "error": "Unauthorized",
+                "message": "Invalid authentication credentials"
+              }
+            }
+          }
+        },
+        "ForbiddenError": {
+          "description": "Forbidden - Insufficient permissions",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "example": {
+                "success": false,
+                "error": "Forbidden",
+                "message": "Insufficient permissions to access this resource"
+              }
+            }
+          }
+        },
+        "NotFoundError": {
+          "description": "Resource not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "example": {
+                "success": false,
+                "error": "Not Found",
+                "message": "Requested resource was not found"
+              }
+            }
+          }
+        },
+        "InternalServerError": {
+          "description": "Internal server error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "example": {
+                "success": false,
+                "error": "Internal Server Error",
+                "message": "An unexpected error occurred"
+              }
+            }
+          }
+        }
+      }
+    },
+    "tags": [
+      {
+        "name": "Authentication",
+        "description": "Admin authentication and token management"
+      },
+      {
+        "name": "Schools",
+        "description": "School management operations"
+      },
+      {
+        "name": "Students",
+        "description": "Student management operations"
+      },
+      {
+        "name": "Certificates",
+        "description": "Certificate and result management"
+      },
+      {
+        "name": "Search",
+        "description": "Search and query operations"
+      },
+      {
+        "name": "Payments",
+        "description": "Payment processing and verification"
+      },
+      {
+        "name": "Certificate Generation",
+        "description": "PDF certificate generation and download"
+      },
+      {
+        "name": "Reports",
+        "description": "Statistical reports and analytics"
+      }
+    ]
+  }
